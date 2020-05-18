@@ -39,4 +39,4 @@ class Comment(models.Model):
     
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     comment = models.CharField(max_length=500)
-    added_on = models.DateField(auto_now_add=True)
+    added_on = models.DateField()

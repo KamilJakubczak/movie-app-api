@@ -24,3 +24,9 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'movie', 'comment', 'added_on')
         read_only_fields = ('id', 'added_on')
+
+class TopSerializer(serializers.Serializer):
+    """Serializer for comment objects"""
+    movie_id = serializers.IntegerField()
+    total_comments = serializers.IntegerField()
+    rank = serializers.IntegerField()

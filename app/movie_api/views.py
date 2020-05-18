@@ -1,6 +1,7 @@
 import requests
 import os
-
+import json
+import datetime
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,7 +12,7 @@ from django.core import serializers as srz
 from django.http import Http404
 
 from movie_api import serializers
-from movie_api.serializers import CommentSerializer
+from movie_api.serializers import CommentSerializer, TopSerializer
 from movie_api.models import Movie, Comment
 
 EXTERNAL_API_LINK = 'http://www.omdbapi.com'
@@ -100,7 +101,9 @@ class MovieApiView(APIView):
             )
 
 class CommentList(APIView):
-    """Get all comments and add new one"""
+    """
+    Get all comments and add new one
+    """
     def get(self, request, format=None):
         comments = Comment.objects.all()
         serializer = CommentSerializer(comments, many=True)
@@ -121,7 +124,9 @@ class CommentList(APIView):
 
 
 class CommentDetail(APIView):
-    """Detailed view for comment objects"""
+    """
+    Detailed view for comment objects
+    """
 
     def get_object(self, pk):
         try:
@@ -130,8 +135,106 @@ class CommentDetail(APIView):
             raise Http404
     
     def get(self, request, pk, type=None):
-        """Retreive comments from db"""
+        """
+        Get comments from db for provided movie id
+        """
 
         comment = self.get_object(pk)
         serializer = serializers.CommentSerializer(comment, many=True)
         return Response(serializer.data)
+
+
+class Ranking:
+    """
+    Simple object of movie id, count of related object 
+    and ranking place
+    """ 
+
+    def __init__(self, movie_id, total_comments):
+        self.movie_id = movie_id
+        self.total_comments = total_comments
+
+    def set_ranking(self,rank):
+        self.rank = rank
+
+
+class Top(APIView):
+    """Returns top movies for secific data range"""
+
+    def valid_date(self, date_str):
+        try:
+            datetime.datetime.strptime(date_str, '%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
+
+    def compare_dates(self, from_date, to_date):
+
+        from_data = datetime.datetime.strptime(from_date, '%Y-%m-%d')
+        to_date = datetime.datetime.strptime(to_date, '%Y-%m-%d')
+        print(from_data > to_date)
+        if from_data > to_date:
+            return False
+        else:
+            return True
+
+    def get(self, request):
+        """
+        Returns the top movies list based on number of comments
+        for specified date range
+        - from yyyy-mm-dd
+        - to yyy-mm-dd
+        """ 
+        # Get request data
+        since = request.data['from']
+        to = request.data['to']
+
+        # Date range validation
+        if not self.valid_date(since) \
+           or not self.valid_date(to) \
+           or not self.compare_dates(since,to):
+            return Response(
+            {'error': 'dates are invalid, the required format is yyyy-mm-dd'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+        # Get all movie objects from db
+        all_movies = Movie.objects.all()
+
+        # Get list of movies along wuth comment number
+        response = []
+        for movie in all_movies:
+            total_comments = Comment.objects.all().filter(
+                movie__id=movie.id
+            ).filter(
+                added_on__gte=since
+            ).filter(
+                added_on__lte=to
+            ).count()
+            list_item = Ranking(movie.id, total_comments)
+            response.append(list_item)
+        response = sorted(
+            response,
+            key=lambda total: total.total_comments,
+            reverse=True
+        )
+
+        # Set rank
+        for item in range(len(response)):
+            prev = response[item-1]
+            cur = response[item]
+            try:
+                if response[item-1].rank \
+                    and (prev.total_comments == cur.total_comments):
+                    cur.set_ranking(prev.rank)
+                else:
+                    cur.set_ranking(prev.rank+1)
+            except:
+                cur.set_ranking(1)
+
+        # Set objects to be JSONable
+        res = []
+        for i in response:
+            res.append(i.__dict__)
+
+        return Response(res)
