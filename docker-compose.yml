@@ -19,6 +19,8 @@ services:
       - DB_USER=postgres
       - DB_PASS=supersecretpassword
       - SECRET_KEY=a_$$_fbl6g_!r)&pkn$$6!s85w#0v9-2uzrp35kt#t#mrhf8-voy
+      - API_KEY=f7bf07c6
+      - I=tt3896198
     depends_on:
       - db
   db:
