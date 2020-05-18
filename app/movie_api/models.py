@@ -36,7 +36,7 @@ class Movie(models.Model):
 
 class Comment(models.Model):
     """Models for comment objects"""
-    
+
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     comment = models.CharField(max_length=500)
     added_on = models.DateField()

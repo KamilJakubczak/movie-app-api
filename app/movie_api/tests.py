@@ -5,11 +5,11 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from movie_api import models
-from movie_api import serializers
 
 
 MOVIE_URL = reverse('api:movies')
-# MOVIE_URL_FIRST = reverse('api:movies:1')
+
+TOP_URL = reverse('api:top')
 
 
 class MovieTests(TestCase):
@@ -21,7 +21,6 @@ class MovieTests(TestCase):
     def mock_movie(self):
         """Return mock movie for testing pourpose"""
 
-
         return models.Movie.objects.create(
             Title="Alien",
             Year="1979",
@@ -30,13 +29,13 @@ class MovieTests(TestCase):
             Runtime="117 min",
             Genre="Horror, Sci-Fi",
             Director="Ridley Scott",
-            Writer="Dan O'Bannon (screenplay by), Dan O'Bannon (story by), Ronald Shusett (story by)",
-            Actors="Tom Skerritt, Sigourney Weaver, Veronica Cartwright, Harry Dean Stanton",
-            Plot="After a space merchant vessel receives an unknown transmission as a distress call, one of the crew is attacked by a mysterious life form and they soon realize that its life cycle has merely begun.",
+            Writer="Dan O'Bannon (ett (story by)",
+            Actors="Tom Skerritt, Sigourrry Dean Stanton",
+            Plot="After a spaly begun.",
             Language="English",
             Country="UK, USA",
             Awards="Won 1 Oscar. Another 16 wins & 21 nominations.",
-            Poster="https://m.media-amazon.com/images/M/MV5BMmQ2MmU3NzktZjAxOC00ZDZhLTk4YzEtMDMyMzcxY2IwMDAyXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg",
+            Poster="https://m.media-amazon.",
             Ratings=[
                 {
                     "Source": "Internet Movie Database",
@@ -51,15 +50,15 @@ class MovieTests(TestCase):
                     "Value": "89/100"
                 }
             ],
-            Metascore= "89",
-            imdbRating= "8.4",
-            imdbVotes= "755,624",
-            imdbID= "tt0078748",
-            Type= "movie",
-            DVD= "N/A",
-            BoxOffice= "N/A",
-            Production= "N/A",
-            Website= "N/A",
+            Metascore="89",
+            imdbRating="8.4",
+            imdbVotes="755,624",
+            imdbID="tt0078748",
+            Type="movie",
+            DVD="N/A",
+            BoxOffice="N/A",
+            Production="N/A",
+            Website="N/A",
             Response="True"
         )
 
@@ -77,14 +76,48 @@ class MovieTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_add_the_same_movie(self):
-        """Test checkig if adding the same movie is not allowed"""
-        
-        movie = self.mock_movie()
 
-        payload = {'title': 'Alien'}
-        res = self.client.post(MOVIE_URL, payload)
+class Top(TestCase):
+    """
+    Testcases for top view
+    """
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_incorrect_date_format(self):
+        """
+        Checks for date validation
+        """
+        res = self.client.get(TOP_URL, {
+            'date_from': '2020:05:05',
+            'date_to': '2020-28-06'
+        })
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_check_if_to_grater_than_from(self):
+        """
+        Tescase checking if data range is valid
+        """
 
+        res = self.client.get(TOP_URL, {
+            'date_from': '2020-05-02',
+            'date_to': '2020-05-02'
+        })
+
+        res2 = self.client.get(TOP_URL, {
+            'date_from': '2020-05-03',
+            'date_to': '2020-05-02'
+        })
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_check_for_missing_params(self):
+        """
+        Tescase if params are provided
+        """
+
+        res = self.client.get(TOP_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
