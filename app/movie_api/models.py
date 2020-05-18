@@ -5,7 +5,7 @@ class Movie(models.Model):
     """Model for movie objects"""
 
     Title = models.CharField(max_length=255)
-    Year = models.IntegerField()
+    Year = models.CharField(max_length=255)
     Rated = models.CharField(max_length=255)
     Released = models.CharField(max_length=255)
     Runtime = models.CharField(max_length=255)
@@ -19,8 +19,8 @@ class Movie(models.Model):
     Awards = models.CharField(max_length=255)
     Poster = models.CharField(max_length=500)
     Ratings = models.CharField(max_length=500)
-    Metascore = models.IntegerField()
-    imdbRating = models.DecimalField(max_digits=3, decimal_places=1)
+    Metascore = models.CharField(max_length=255)
+    imdbRating = models.CharField(max_length=255)
     imdbVotes = models.CharField(max_length=255)
     imdbID = models.CharField(max_length=255)
     Type = models.CharField(max_length=255)
@@ -29,3 +29,7 @@ class Movie(models.Model):
     Production = models.CharField(max_length=255)
     Website = models.CharField(max_length=255)
     Response = models.CharField(max_length=255)
+
+    # def __str__(self):
+    #     return self.Title
+    

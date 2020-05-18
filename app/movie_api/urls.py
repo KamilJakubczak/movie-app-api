@@ -6,4 +6,5 @@ app_name = 'api'
 
 urlpatterns = [
     path('movies/', views.MovieApiView.as_view(), name='movies'),
+    path('movies/<int:pk>/', views.MovieApiView.as_view()),
 ]
