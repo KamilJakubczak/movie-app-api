@@ -5,10 +5,13 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from movie_api import models
+from movie_api.models import Comment, Movie
+from movie_api.serializers import CommentSerializer
 
 
 MOVIE_URL = reverse('api:movies')
-
+COMMENT_URL = reverse('api:comments')
+COMMENT_SINGLE_URL = reverse('api:comment', args=[2])
 TOP_URL = reverse('api:top')
 
 
@@ -75,6 +78,88 @@ class MovieTests(TestCase):
         res = self.client.post(MOVIE_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_movie_duplication(self):
+        """Test of adding duplicated movie to db"""
+        payload = {'title': 'Alien'}
+
+        self.client.post(MOVIE_URL, payload)
+        self.client.post(MOVIE_URL, payload)
+
+        movie = Movie.objects.all()
+
+        self.assertEqual(movie.count(), 1)
+
+
+class CommentTests(TestCase):
+    """
+    Testcases for top view
+    """
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_add_comment_successfully(self):
+        """
+        Check for adding comment
+        """
+
+        movie = MovieTests.mock_movie(self)
+        Comment.objects.create(
+            movie=movie,
+            comment='test'
+        )
+
+        res = self.client.get(COMMENT_URL)
+        comments = Comment.objects.all()
+        serializer = CommentSerializer(comments, many=True)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)
+
+    def test_prevent_adding_blank_comment(self):
+        """
+        Check if adding blank comment is impossible
+        """
+
+        res = self.client.post(COMMENT_URL, {
+            'movie': '5',
+            'comment': ''
+        })
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_adding_comment_to_not_existing_movie(self):
+        """
+        Check if adding blank comment is impossible
+        for non existing movie
+        """
+
+        res = self.client.post(COMMENT_URL, {
+            'movie': '99',
+            'comment': 'test'
+        })
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_comment_for_existing_movie(self):
+        """
+        Check getting comments for existing movie
+        """
+        movie = MovieTests.mock_movie(self)
+        Comment.objects.create(
+            movie=movie,
+            comment='test'
+        )
+        res = self.client.get(COMMENT_SINGLE_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_get_comment_for_none_existing_movie(self):
+        """
+        Check getting comments for none existing movie
+        """
+
+        res = self.client.get(COMMENT_SINGLE_URL)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class Top(TestCase):

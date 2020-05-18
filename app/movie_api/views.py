@@ -9,7 +9,6 @@ from rest_framework import status
 from django.http import Http404
 
 from movie_api import serializers
-from movie_api.serializers import CommentSerializer
 from movie_api.models import Movie, Comment
 
 EXTERNAL_API_LINK = 'http://www.omdbapi.com'
@@ -66,20 +65,17 @@ class MovieApiView(APIView):
                 exists = Movie.objects.get(
                     Title=movie_data.json()['Title']
                 )
-            except:
+            except Movie.DoesNotExist:
                 exists = None
             if not exists:
-                # movie_serializer.is_valid()
-                # print(movie_serializer.errors)
                 if movie_serializer.is_valid():
-                    # movie_serializer.save()
-                    saved_movie = Movie.objects.create(**movie_data.json())
-                    # print(saved_movie)
+                    movie_serializer.save()
 
-                    # data = srz.serialize('json', saved_movie)
-                    # print(data)
-                    # return Response({'data':saved_movie})
-                return Response({'details': movie_data.json()})
+                if bool(movie_serializer.errors):
+                    return Response({
+                        'error': 'error movie not saved in db'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(movie_serializer.data)
             else:
                 serializer = self.movie_serializer_class(
                     exists,
@@ -100,11 +96,11 @@ class CommentList(APIView):
     """
     def get(self, request, format=None):
         comments = Comment.objects.all()
-        serializer = CommentSerializer(comments, many=True)
+        serializer = serializers.CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = CommentSerializer(data=request.data)
+        serializer = serializers.CommentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(
@@ -123,9 +119,11 @@ class CommentDetail(APIView):
     """
 
     def get_object(self, pk):
-        try:
+        comments = Comment.objects.all().filter(movie__id=pk)
+
+        if comments:
             return Comment.objects.all().filter(movie__id=pk)
-        except Comment.DoesNotExist:
+        else:
             raise Http404
 
     def get(self, request, pk, type=None):
@@ -187,6 +185,7 @@ class Top(APIView):
         since = self.request.query_params.get('date_from')
         to = self.request.query_params.get('date_to')
         if since is None or to is None:
+
             return Response(
                 {'error': '''no dates provided'''},
                 status=status.HTTP_400_BAD_REQUEST
@@ -229,11 +228,11 @@ class Top(APIView):
             cur = response[item]
             try:
                 if response[item-1].rank \
-                and (prev.total_comments == cur.total_comments):
+                   and (prev.total_comments == cur.total_comments):
                     cur.set_ranking(prev.rank)
                 else:
                     cur.set_ranking(prev.rank+1)
-            except:
+            except AttributeError:
                 cur.set_ranking(1)
 
         # Set objects to be JSONable
