@@ -5,10 +5,14 @@ import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import viewsets
+
 from django.core import serializers as srz
+from django.http import Http404
 
 from movie_api import serializers
-from movie_api.models import Movie
+from movie_api.serializers import CommentSerializer
+from movie_api.models import Movie, Comment
 
 EXTERNAL_API_LINK = 'http://www.omdbapi.com'
 
@@ -94,3 +98,40 @@ class MovieApiView(APIView):
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class CommentList(APIView):
+    """Get all comments and add new one"""
+    def get(self, request, format=None):
+        comments = Comment.objects.all()
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CommentDetail(APIView):
+    """Detailed view for comment objects"""
+
+    def get_object(self, pk):
+        try:
+            return Comment.objects.all().filter(movie__id=pk)
+        except Comment.DoesNotExist:
+            raise Http404
+    
+    def get(self, request, pk, type=None):
+        """Retreive comments from db"""
+
+        comment = self.get_object(pk)
+        serializer = serializers.CommentSerializer(comment, many=True)
+        return Response(serializer.data)

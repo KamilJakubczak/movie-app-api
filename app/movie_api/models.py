@@ -30,6 +30,13 @@ class Movie(models.Model):
     Website = models.CharField(max_length=255)
     Response = models.CharField(max_length=255)
 
-    # def __str__(self):
-    #     return self.Title
+    def __str__(self):
+        return self.Title
+
+
+class Comment(models.Model):
+    """Models for comment objects"""
     
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=500)
+    added_on = models.DateField(auto_now_add=True)

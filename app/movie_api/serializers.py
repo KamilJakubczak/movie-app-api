@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from movie_api.models import Movie
+from movie_api.models import Movie, Comment
 
 
 class TitleSerialzier(serializers.Serializer):
@@ -15,3 +15,12 @@ class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for comment objects"""
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'movie', 'comment', 'added_on')
+        read_only_fields = ('id', 'added_on')
