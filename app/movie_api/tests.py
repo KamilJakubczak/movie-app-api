@@ -12,6 +12,8 @@ MOVIE_URL = reverse('api:movies')
 TOP_URL = reverse('api:top')
 
 
+
+
 class MovieTests(TestCase):
     """Testcases for movie objects"""
 
@@ -75,6 +77,18 @@ class MovieTests(TestCase):
         res = self.client.post(MOVIE_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+class CommentTests(TestCase):
+    """
+    Testcases for top view
+    """
+    def setUp(self):
+        self.client = APIClient()
+
+    # def test_add_comment_successfully(self):
+
+    #     comment = 
+    #     res = 
 
 
 class Top(TestCase):

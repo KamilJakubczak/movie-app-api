@@ -69,17 +69,14 @@ class MovieApiView(APIView):
             except:
                 exists = None
             if not exists:
-                # movie_serializer.is_valid()
-                # print(movie_serializer.errors)
                 if movie_serializer.is_valid():
-                    # movie_serializer.save()
-                    saved_movie = Movie.objects.create(**movie_data.json())
-                    # print(saved_movie)
+                    movie_serializer.save()
 
-                    # data = srz.serialize('json', saved_movie)
-                    # print(data)
-                    # return Response({'data':saved_movie})
-                return Response({'details': movie_data.json()})
+                if bool(movie_serializer.errors):
+                    return Response({
+                        'error': 'error movie not saved in db'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(movie_serializer.data)
             else:
                 serializer = self.movie_serializer_class(
                     exists,
