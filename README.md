@@ -1,6 +1,8 @@
 # movie-app-api
 a basic movie database interacting with external API
 
+https://movies-api11.herokuapp.com/api/movies/
+
 # Docker-compose steps to run 
 docker-compose build
 docker-compose run --service-ports app sh -c 'python manage.py runserver 0.0.0.0:8000'
